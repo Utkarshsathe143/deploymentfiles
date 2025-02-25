@@ -1,0 +1,109 @@
+# this below code have all the jobs in one 
+name: deployment excersie 1
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+     -name: get code
+     uses: actions/checkout@v3
+     -name: Install dependencies
+     run: npm ci
+     -name: lint
+     run: npm run lint
+
+#this code below will have the seperate jobs for test lint and deploy.
+name: deployment excersie 2
+on: push
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+     -name: get code
+     uses: actions/checkout@v3
+     -name: Install dependencies
+     run: npm ci
+     -name: lint
+     run: npm run lint
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+     -name: get code
+     uses: actions/checkout@v3
+     -name: Install dependencies
+     run: npm ci
+     -name: run test
+     run: npm run test
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+     -name: get code
+     uses: actions/checkout@v3
+     -name: Install dependencies
+     run: npm ci
+     -name: build
+     run: npm run build
+     -name: deploy on machine
+     run: echo "deploying in instance"      
+
+# this below workflow will execute when there are updates in issues.
+
+name: handles issues
+on: issues
+jobs:
+  output-info:
+    runs-on: ubuntu-latest
+    run: echo "{{toJSON(github.events)}}" #github contexxt object is a complex object and the .events is a filed in that object and we will only access that.
+
+# there are list of activity types for an particular events that can execute a workflow for example 
+
+on:
+ push:
+  branches:
+    -main
+    -develop
+    -'dev-*' # dev-new-again so in this when a push is happended to branch that start from dev-XXXX then it will trigger the workflow.
+    -'feat/**' # feat/new, feat/new/again it will take anything after / just the feat/ should be matching and it will trigger the workflow. The teo astriks are aslo sognificant. It allows / on the cahareaters moving forward.
+
+# if you need to upload the build files in the server or store it then you use the artifcats action that is present in github.
+
+ -name: artifacts run
+  uses: actions/upload-artifacts@v3
+  with:
+   name: dist-files
+   path: dist
+
+# so as we have uploaded th artifacts now if we have to upload them into the server we can eeither run that action in deploy job or we have to download the artifacts in the server
+
+-name: download artifacts
+ uses: actions/download-artifact@v3
+ with:
+  name: dist-files
+
+# if you want to publish an output so that otheer job can use it too then we have to add a output key in that particular job in which the file is made so that it can be published.
+
+build:
+  needs: test
+  runs-on: ubuntu-latest
+  outputs: 
+    any_name:  ${{ steps.publish.outputs.script-file }}
+  steps:
+    -name: 
+     uses: actions/checkout@v3
+     .
+     .
+     .
+     .
+    -name: publish file name
+     id: Publish
+     run: find dist/assets/*.js -type f -execir echo 'script-file={}' >> $GITHUB_OUTPUT ';' 
+
+# now of you want the output you have to
+
+-name: output filename
+ run: echo "${{ needs.build.output.script-file }}" # the need command is necessary as its dependent on the job to get the output.
+
+# the checkout actions is necessary for all the jobs as each job runs ona different machine.
