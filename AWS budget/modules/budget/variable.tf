@@ -17,3 +17,4 @@ variable "time_unit" {
   description = "Monthly, Weekly, Annually"
   type        = string
 }
+
