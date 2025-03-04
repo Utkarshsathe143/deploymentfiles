@@ -18,3 +18,40 @@ variable "time_unit" {
   type        = string
 }
 
+variable "amortized" {
+  description = ""
+  type = bool
+  default = false
+}
+
+variable "blended" {
+  description = ""
+  type        = bool
+  default = false
+}
+
+variable "threshold" {
+  description = ""
+  type        = string
+}
+
+variable "subscriber_emails" {
+  description = "List of email addresses to receive budget notifications"
+  type        = list(string)
+  default     = ["your-email@example.com"]
+}
+
+variable "time_period_end" {
+  description = ""
+  type        = number
+}
+
+variable "time_period_start" {
+  description = ""
+  type        = number
+}
+
+variable "tags" {
+  description = ""
+  type        = string
+}

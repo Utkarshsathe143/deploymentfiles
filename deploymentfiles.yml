@@ -56,7 +56,8 @@ on: issues
 jobs:
   output-info:
     runs-on: ubuntu-latest
-    run: echo "{{toJSON(github.events)}}" #github contexxt object is a complex object and the .events is a filed in that object and we will only access that.
+    run: echo "{{toJSON(github.events)}}" #github contexxt object is a complex object and the .events is a 
+                                          #filed in that object and we will only access that.
 
 # there are list of activity types for an particular events that can execute a workflow for example 
 
@@ -66,7 +67,8 @@ on:
     -main
     -develop
     -'dev-*' # dev-new-again so in this when a push is happended to branch that start from dev-XXXX then it will trigger the workflow.
-    -'feat/**' # feat/new, feat/new/again it will take anything after / just the feat/ should be matching and it will trigger the workflow. The teo astriks are aslo sognificant. It allows / on the cahareaters moving forward.
+    -'feat/**' # feat/new, feat/new/again it will take anything after / just the feat/ should be matching 
+               #and it will trigger the workflow. The teo astriks are aslo sognificant. It allows / on the cahareaters moving forward.
 
 # if you need to upload the build files in the server or store it then you use the artifcats action that is present in github.
 
@@ -76,14 +78,16 @@ on:
    name: dist-files
    path: dist
 
-# so as we have uploaded th artifacts now if we have to upload them into the server we can eeither run that action in deploy job or we have to download the artifacts in the server
+# so as we have uploaded th artifacts now if we have to upload them into the server we can eeither run that action in 
+#deploy job or we have to download the artifacts in the server
 
 -name: download artifacts
  uses: actions/download-artifact@v3
  with:
   name: dist-files
 
-# if you want to publish an output so that otheer job can use it too then we have to add a output key in that particular job in which the file is made so that it can be published.
+# if you want to publish an output so that otheer job can use it too then we have to add a output key in that particular job in which 
+# the file is made so that it can be published.
 
 build:
   needs: test
@@ -107,3 +111,60 @@ build:
  run: echo "${{ needs.build.output.script-file }}" # the need command is necessary as its dependent on the job to get the output.
 
 # the checkout actions is necessary for all the jobs as each job runs ona different machine.
+
+# environment variables can be configured in jobs level in CI/CD pipelines and workflow level below the trigger event for main and 
+# master branch with the same level of indentation used for name at the starting.
+jobs:
+  test:
+    env:
+      Mongo_DB_Name: example # any environment variable configured inside a job "in this example test job" will only be available in 
+                             # this particular jon and no other.
+
+# we can create specific environment for different jobs. Like for test job i can create testing environment. and if i define secret in 
+# that environment and then that secret will only be used by test job for which the envirnment was created.
+jobs:
+  test:
+   environment: 
+     env:
+       Mongo_DB_Name: ${{ secrets.Mongo_DB_Name }}
+
+# the echo command can be run through two ways.
+
+run : echo "MONGODB_USERNAME: $MONGODB_USERNAME "
+run : echo "MONGODB_USERNAME: ${{ env.MONGODB_USERNAME }} "
+
+# now we will see the controlling execution flow.
+# for exampple that we have a run test line. and in that command a file is generated that will have the reports of the test and if that 
+# fails we have to upload the file which contains the report. so we will use the if condition for that and also the id parameter.
+# we have to add the ID parameter in the step for which we are defining the if condition.
+# even if we use the if condition the step will not execute as this is a default behaviour so we have to use the failure function.
+name: deployment excersie 2
+on: push
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+     -name: get code
+     uses: actions/checkout@v3
+     -name: Install dependencies
+     run: npm ci
+     -name: lint
+     run: npm run lint
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+     -name: get code
+     uses: actions/checkout@v3
+     -name: Install dependencies
+     run: npm ci
+     -name: run test
+     id: run-test # i can give any name. 
+     run: npm run test
+     -name: test report
+     if: failure() && steps.run-test.outcome == 'failure' # if condition can be used with four functions failure, always, success, cancelled.
+     uses: actions/upload-artifcats@v3
+     with:
+       name: test-report
+       path: test.json

@@ -4,6 +4,10 @@ module "budget" {
   limit_amount = var.limit_amount
   limit_unit   = var.limit_unit
   time_unit    = var.time_unit
+  amortized     = true
+  blended       = true
+  unblended     = true
+  forecasted    = true
 }
 
 module "anomaly_detector" {
